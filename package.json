@@ -1,6 +1,6 @@
 {
   "name": "@nomercy-entertainment/media-session",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Media Session API for web browsers",
   "type": "module",
   "main": "./dist/index.js",

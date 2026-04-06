@@ -1,15 +1,11 @@
 // noinspection JSUnusedGlobalSymbols
 
 // ChapterInformation is not yet in TypeScript's DOM lib — declare it locally.
-interface ChapterInformation {
+interface ChapterInformationInit {
 	title: string;
 	startTime: number;
 	artwork?: MediaImage[];
 }
-
-declare let ChapterInformation: {
-	new(init: ChapterInformation): ChapterInformation;
-};
 
 interface ChapterOptions {
 	title: string;
@@ -153,14 +149,19 @@ export default class MediaSession {
 
 		const artworkList = buildArtworkList(artwork);
 
-		let chapterInfo: ChapterInformation[] | undefined;
+		let chapterInfo: ChapterInformationInit[] | undefined;
 
 		if (chapters && chapters.length > 0) {
-			chapterInfo = chapters.map((chapter) => new ChapterInformation({
-				title: chapter.title,
-				startTime: chapter.startTime,
-				artwork: buildArtworkList(chapter.artwork),
-			}));
+			const ChapterCtor = (globalThis as any).ChapterInformation;
+
+			chapterInfo = chapters.map((chapter) => {
+				const init: ChapterInformationInit = {
+					title: chapter.title,
+					startTime: chapter.startTime,
+					artwork: buildArtworkList(chapter.artwork),
+				};
+				return ChapterCtor ? new ChapterCtor(init) : init;
+			});
 		}
 
 		navigator.mediaSession.metadata = null;
