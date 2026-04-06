@@ -149,20 +149,16 @@ export default class MediaSession {
 
 		const artworkList = buildArtworkList(artwork);
 
-		let chapterInfo: ChapterInformationInit[] | undefined;
+		const chapterList: ChapterInformationInit[] = [];
 
-		if (chapters && chapters.length > 0) {
-			const ChapterCtor = (globalThis as any).ChapterInformation;
-
-			chapterInfo = chapters.map((chapter) => {
-				const init: ChapterInformationInit = {
-					title: chapter.title,
-					startTime: chapter.startTime,
-					artwork: buildArtworkList(chapter.artwork),
-				};
-				return ChapterCtor ? new ChapterCtor(init) : init;
-			});
-		}
+		chapters?.forEach((chapter) => {
+			const init: ChapterInformationInit = {
+				title: chapter.title,
+				startTime: chapter.startTime,
+				artwork: buildArtworkList(chapter.artwork),
+			};
+			chapterList.push(init);
+		});
 
 		navigator.mediaSession.metadata = null;
 		navigator.mediaSession.metadata = new MediaMetadata({
@@ -170,7 +166,7 @@ export default class MediaSession {
 			artist,
 			album,
 			artwork: artworkList,
-			...(chapterInfo ? { chapterInfo } : {}),
+			chapterInfo: chapterList,
 		} as MediaMetadataInit);
 	}
 
