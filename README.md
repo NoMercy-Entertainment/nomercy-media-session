@@ -26,6 +26,9 @@ Empowers media experiences in [NoMercyTV](https://nomercy.tv/) and other NoMercy
 - **Playback State:** Control and reflect play, pause, stop, etc.
 - **Position State:** Sync duration, position, and playback rate
 - **Action Handlers:** Respond to play, pause, seek, next/previous, and more
+- **Chapter Support:** Attach chapter markers to metadata for enhanced media navigation
+- **Skip Ad:** Register a skip-ad action handler for ad-supported content
+- **Handler Cleanup:** Unregister action handlers individually or all at once
 - **TypeScript Support:** Full typings for safe integration
 - **Framework Agnostic:** Use with any frontend framework
 - **Graceful Fallback:** Silently no-ops when Media Session API is unavailable
@@ -47,12 +50,17 @@ import MediaSession from '@nomercy-entertainment/media-session';
 
 const mediaSession = new MediaSession();
 
-// Set metadata
+// Set metadata with chapters
 mediaSession.setMetadata({
   title: 'Song Title',
   artist: 'Artist Name',
   album: 'Album Name',
-  artwork: 'https://example.com/artwork.jpg'
+  artwork: 'https://example.com/artwork.jpg',
+  chapters: [
+    { title: 'Intro', startTime: 0 },
+    { title: 'Verse 1', startTime: 30 },
+    { title: 'Chorus', startTime: 90, artwork: 'https://example.com/chorus.jpg' },
+  ],
 });
 
 // Set playback state
@@ -80,6 +88,7 @@ mediaSession.setActionHandler({
   next: () => {},
   seek: (time) => audioElement.currentTime = time,
   getPosition: () => audioElement.currentTime,
+  skipAd: () => skipToContent(),
 });
 ```
 
@@ -99,6 +108,42 @@ When passing a string URL as artwork, the library automatically generates multip
 
 You can also pass a `MediaImage[]` array directly for full control over artwork variants.
 
+### Chapters
+
+Pass a `chapters` array in `setMetadata` to attach chapter markers to the current track. Each chapter object has:
+
+- `title` (string) — display name for the chapter
+- `startTime` (number) — start offset in seconds
+- `artwork` (optional) — a string URL or `MediaImage[]` array; receives the same automatic multi-size generation as main artwork
+
+Chapters are forwarded to the browser's MediaSession API as `chapterInfo` where supported.
+
+```typescript
+mediaSession.setMetadata({
+  title: 'My Video',
+  chapters: [
+    { title: 'Introduction', startTime: 0 },
+    { title: 'Main Content', startTime: 120 },
+    { title: 'Credits', startTime: 3540, artwork: 'https://example.com/credits.jpg' },
+  ],
+});
+```
+
+### Handler Cleanup
+
+Use `clearActionHandler` to unregister handlers when a component unmounts or media changes.
+
+```typescript
+// Clear a specific handler
+mediaSession.clearActionHandler('play');
+
+// Clear multiple handlers
+mediaSession.clearActionHandler(['play', 'pause', 'seekto']);
+
+// Clear all handlers
+mediaSession.clearActionHandler();
+```
+
 ---
 
 ## Browser Support
@@ -108,6 +153,19 @@ You can also pass a `MediaImage[]` array directly for full control over artwork 
 | Media Session API |   73+  |   82+   |  15+   | 79+  |
 
 When the Media Session API is not available, all methods silently no-op.
+
+---
+
+## Migration from v1.0.x
+
+v1.1.0 is fully backwards compatible. No changes are required for existing code.
+
+**What's new:**
+
+- `setMetadata` now accepts an optional `chapters` array (see [Chapters](#chapters))
+- `setActionHandler` now accepts an optional `skipAd` callback
+- New `clearActionHandler()` method for cleanup (see [Handler Cleanup](#handler-cleanup))
+- Fixed `image/jpg` MIME type typo — all generated artwork sizes now correctly use `image/jpeg`
 
 ---
 
