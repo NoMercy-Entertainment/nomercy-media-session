@@ -72,6 +72,17 @@ describe('MediaSession', () => {
 		);
 	});
 
+	test('buildArtworkList output snapshot', () => {
+		mediaSession.setMetadata({
+			title: '',
+			artist: '',
+			album: '',
+			artwork: 'https://example.com/img.jpg',
+		});
+
+		expect((navigator as any).mediaSession.metadata.artwork).toMatchSnapshot();
+	});
+
 	test('should set action handlers correctly', () => {
 		const playHandler = jest.fn();
 		const pauseHandler = jest.fn();
