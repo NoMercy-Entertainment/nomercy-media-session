@@ -1,12 +1,5 @@
 // noinspection JSUnusedGlobalSymbols
 
-// ChapterInformation is not yet in TypeScript's DOM lib — declare it locally.
-interface ChapterInformationInit {
-	title: string;
-	startTime: number;
-	artwork?: MediaImage[];
-}
-
 interface ChapterOptions {
 	title: string;
 	startTime: number;
@@ -29,6 +22,8 @@ type ActionHandlerName =
 	| 'seekto'
 	| 'skipad';
 
+const SIZES = [96, 128, 192, 256, 384, 512] as const;
+
 function buildArtworkList(artwork: MediaImage[] | string | undefined): MediaImage[] {
 	if (typeof artwork === 'undefined') return [];
 
@@ -36,18 +31,14 @@ function buildArtworkList(artwork: MediaImage[] | string | undefined): MediaImag
 
 	if (typeof artwork !== 'string' || !artwork) return [];
 
-	const isPng = artwork.endsWith('.png') || artwork.includes('type=png');
-	const mime = isPng ? 'image/png' : 'image/jpeg';
-
-	return [
-		{ src: encodeURI(`${artwork}?width=96&type=png&aspect_ratio=1`),  sizes: '96x96',   type: mime },
-		{ src: encodeURI(`${artwork}?width=128&type=png&aspect_ratio=1`), sizes: '128x128', type: mime },
-		{ src: encodeURI(`${artwork}?width=192&type=png&aspect_ratio=1`), sizes: '192x192', type: mime },
-		{ src: encodeURI(`${artwork}?width=256&type=png&aspect_ratio=1`), sizes: '256x256', type: mime },
-		{ src: encodeURI(`${artwork}?width=384&type=png&aspect_ratio=1`), sizes: '384x384', type: mime },
-		{ src: encodeURI(`${artwork}?width=512&type=png&aspect_ratio=1`), sizes: '512x512', type: mime },
-	];
+	return SIZES.map(w => ({
+		src: encodeURI(`${artwork}?width=${w}&type=png&aspect_ratio=1`),
+		sizes: `${w}x${w}`,
+		type: 'image/png',
+	}));
 }
+
+const noop: MediaSessionActionHandler = () => {};
 
 export default class MediaSession {
 
@@ -69,12 +60,12 @@ export default class MediaSession {
 
 		navigator.mediaSession.setActionHandler(
 			'previoustrack',
-			previous ?? (() => {})
+			previous ?? noop
 		);
 
 		navigator.mediaSession.setActionHandler(
 			'nexttrack',
-			next ?? (() => {})
+			next ?? noop
 		);
 
 		if (
@@ -97,13 +88,13 @@ export default class MediaSession {
 			);
 		}
 
-		navigator.mediaSession.setActionHandler('play', play ?? (() => {}));
+		navigator.mediaSession.setActionHandler('play', play ?? noop);
 
-		navigator.mediaSession.setActionHandler('stop', stop ?? (() => {}));
+		navigator.mediaSession.setActionHandler('stop', stop ?? noop);
 
 		navigator.mediaSession.setActionHandler(
 			'pause',
-			pause ?? (() => {})
+			pause ?? noop
 		);
 
 		if (typeof skipAd === 'function') {
@@ -149,16 +140,11 @@ export default class MediaSession {
 
 		const artworkList = buildArtworkList(artwork);
 
-		const chapterList: ChapterInformationInit[] = [];
-
-		chapters?.forEach((chapter) => {
-			const init: ChapterInformationInit = {
-				title: chapter.title,
-				startTime: chapter.startTime,
-				artwork: buildArtworkList(chapter.artwork),
-			};
-			chapterList.push(init);
-		});
+		const chapterList = (chapters ?? []).map(chapter => ({
+			title: chapter.title,
+			startTime: chapter.startTime,
+			artwork: buildArtworkList(chapter.artwork),
+		}));
 
 		navigator.mediaSession.metadata = null;
 		navigator.mediaSession.metadata = new MediaMetadata({
@@ -170,21 +156,13 @@ export default class MediaSession {
 		} as MediaMetadataInit);
 	}
 
-	setPositionState({
-		duration,
-		playbackRate,
-		position,
-	}: {
+	setPositionState(state: {
 		duration: number;
 		playbackRate: number;
 		position: number;
 	}) {
 		if (!('mediaSession' in navigator)) return;
 
-		navigator.mediaSession.setPositionState({
-			duration,
-			playbackRate,
-			position,
-		});
+		navigator.mediaSession.setPositionState(state);
 	}
 }
