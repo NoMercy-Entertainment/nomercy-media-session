@@ -41,7 +41,7 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint --fix .",
-    "test": "jest",
+    "test": "jest --config jest.config.cjs",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {},
