@@ -19,6 +19,15 @@
   "rules": {
     "no-mixed-spaces-and-tabs": "off"
   },
+  "overrides": [
+    {
+      "files": ["*.test.ts", "**/*.test.ts"],
+      "rules": {
+        "@typescript-eslint/ban-ts-comment": "off",
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    }
+  ],
   "ignorePatterns": ["node_modules", "dist"],
   "settings": {
     "import/resolver": {
