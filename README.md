@@ -4,207 +4,128 @@
 [![NPM Downloads](https://img.shields.io/npm/dm/@nomercy-entertainment/media-session?style=flat&logo=npm&logoColor=white&color=cb3837)](https://www.npmjs.com/package/@nomercy-entertainment/media-session)
 [![License](https://img.shields.io/github/license/NoMercy-Entertainment/nomercy-media-session?style=flat&color=green)](./LICENSE)
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-3178c6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Framework Agnostic](https://img.shields.io/badge/Framework-Agnostic-orange?style=flat)](https://github.com/NoMercy-Entertainment/nomercy-media-session)
-[![GitHub Stars](https://img.shields.io/github/stars/NoMercy-Entertainment/nomercy-media-session?style=flat&logo=github&logoColor=white&color=yellow)](https://github.com/NoMercy-Entertainment/nomercy-media-session/stargazers)
-
-
----
+A wrapper around the browser Media Session API for media controls, metadata, and playback state management. Its package manifest declares no runtime dependencies.
 
 ## About
 
-A lightweight wrapper around the browser [Media Session API](https://developer.mozilla.org/en-US/docs/Web/API/Media_Session_API). Provides unified media controls, metadata, and playback state management for audio/video apps with zero dependencies.
-
-Empowers media experiences in [NoMercyTV](https://nomercy.tv/) and other NoMercy projects.
-
----
+This library wraps `navigator.mediaSession`. It registers action handlers, creates artwork entries with size labels from a URL, and sets playback and position states.
 
 ## Features
 
-- **Zero Dependencies:** No external packages required
-- **Media Metadata:** Set title, artist, album, and artwork with automatic multi-size image generation
-- **Playback State:** Control and reflect play, pause, stop, etc.
-- **Position State:** Sync duration, position, and playback rate
-- **Action Handlers:** Respond to play, pause, seek, next/previous, and more
-- **Chapter Support:** Attach chapter markers to metadata for enhanced media navigation
-- **Skip Ad:** Register a skip-ad action handler for ad-supported content
-- **Handler Cleanup:** Unregister action handlers individually or all at once
-- **TypeScript Support:** Full typings for safe integration
-- **Framework Agnostic:** Use with any frontend framework
-- **Graceful Fallback:** Silently no-ops when Media Session API is unavailable
-
----
+- **Media Metadata**: Set title, artist, album, and artwork. A string artwork URL becomes six `MediaImage` entries labeled 96 through 512 pixels wide. Their URLs receive width, type, and aspect-ratio query parameters; the library does not resize image files.
+- **Playback State**: Set the browser's playback state to `none`, `paused`, or `playing`. Stop is an action handler, not a playback state.
+- **Position State**: Sync duration, position, and playback rate.
+- **Action Handlers**: Respond to play, pause, stop, previous, next, seek, and skip-ad actions.
+- **Chapter Support**: Attach chapter markers to metadata for enhanced media navigation.
+- **Handler Cleanup**: Unregister action handlers individually or all at once.
+- **TypeScript Support**: The package includes TypeScript declarations.
+- **Framework Agnostic**: The source has no frontend framework imports.
+- **No Runtime Dependencies**: The package declares no production dependencies; building and testing it uses development dependencies.
 
 ## Quick Start
 
 ### Installation
 
-```sh
-npm install @nomercy-entertainment/media-session
+Run `npm install @nomercy-entertainment/media-session` in your browser application. The package exports the `MediaSession` class as its default export and includes TypeScript declarations.
+
+To verify this repository locally, run these commands from the repository root:
+
+```shell
+npm ci --ignore-scripts
 ```
+This installs the necessary dependencies without triggering lifecycle scripts.
+
+```shell
+npm test -- --runInBand
+```
+This runs the test suite in a single process. A successful run is confirmed by `Tests: 31 passed, 31 total`.
 
 ### Basic Usage
 
 ```typescript
 import MediaSession from '@nomercy-entertainment/media-session';
 
-const mediaSession = new MediaSession();
+const session = new MediaSession();
 
-// Set metadata with chapters
-mediaSession.setMetadata({
+// Example values assume a paused 300-second track at 100 seconds.
+
+// Set action handlers
+session.setActionHandler({
+  play: () => console.log('Playing'),
+  pause: () => console.log('Paused'),
+  seek: (time) => console.log(`Seeking to ${time}`),
+  getPosition: () => 100,
+});
+
+// Set metadata
+session.setMetadata({
   title: 'Song Title',
   artist: 'Artist Name',
   album: 'Album Name',
-  artwork: 'https://example.com/artwork.jpg',
+  artwork: undefined,
   chapters: [
-    { title: 'Intro', startTime: 0 },
-    { title: 'Verse 1', startTime: 30 },
-    { title: 'Chorus', startTime: 90, artwork: 'https://example.com/chorus.jpg' },
-  ],
+    { title: 'Chapter 1', startTime: 0 },
+    { title: 'Chapter 2', startTime: 60 }
+  ]
 });
 
-// Set playback state
-mediaSession.setPlaybackState('playing');
-
-const audioElement = document.createElement('audio');
+session.setPlaybackState('paused');
 
 // Set position state
-mediaSession.setPositionState({
-  duration: audioElement.duration,
-  playbackRate: audioElement.playbackRate,
-  position: audioElement.currentTime
-});
-
-// Set action handlers
-mediaSession.setActionHandler({
-  play: () => audioElement.play(),
-  pause: () => audioElement.pause(),
-  stop: () => {
-    audioElement.pause();
-    audioElement.currentTime = 0;
-    audioElement.removeAttribute('src');
-  },
-  previous: () => {},
-  next: () => {},
-  seek: (time) => audioElement.currentTime = time,
-  getPosition: () => audioElement.currentTime,
-  skipAd: () => skipToContent(),
+session.setPositionState({
+  duration: 300,
+  playbackRate: 1,
+  position: 100
 });
 ```
 
----
+In a browser with the Media Session API, these calls register handlers and set browser metadata, playback state, and position state. The `play` callback logs `Playing` when the browser requests playback. Replace the logging callbacks and example time values with your media element's controls and state. In browsers without that API, the methods return without changing browser state.
 
 ## Advanced Features
 
 ### Media Session Integration
 
-- Native OS media controls (lock screen, notification, hardware buttons)
-- Customizable action handlers for all major media events
-- Automatic artwork resizing for platform compatibility
+`setActionHandler` registers browser actions for play, pause, stop, previous track, and next track. You can also supply `skipAd` for the browser's `skipad` action. Playback state uses `none`, `paused`, or `playing`; `stop` is an action handler rather than a playback state.
+
+To register `seekbackward`, `seekforward`, and `seekto`, supply both `seek` and `getPosition`. If either callback is missing, the seek handlers are not registered. The browser action details provide a seek interval when available; the implementation defaults to 30 seconds for backward and forward seeks.
 
 ### Artwork Handling
 
-When passing a string URL as artwork, the library automatically generates multiple image sizes (96x96 through 512x512) for optimal display across different platforms and devices.
-
-You can also pass a `MediaImage[]` array directly for full control over artwork variants.
+A string artwork URL becomes six `MediaImage` entries labeled 96, 128, 192, 256, 384, and 512 pixels square. The library appends `width`, `type=png`, and `aspect_ratio=1` query parameters to each URL and labels each entry `image/png`. It does not resize image files; the image server must handle those parameters if resized files are needed. A supplied `MediaImage[]` is passed through unchanged.
 
 ### Chapters
 
-Pass a `chapters` array in `setMetadata` to attach chapter markers to the current track. Each chapter object has:
-
-- `title` (string) — display name for the chapter
-- `startTime` (number) — start offset in seconds
-- `artwork` (optional) — a string URL or `MediaImage[]` array; receives the same automatic multi-size generation as main artwork
-
-Chapters are forwarded to the browser's MediaSession API as `chapterInfo` where supported.
-
-```typescript
-mediaSession.setMetadata({
-  title: 'My Video',
-  chapters: [
-    { title: 'Introduction', startTime: 0 },
-    { title: 'Main Content', startTime: 120 },
-    { title: 'Credits', startTime: 3540, artwork: 'https://example.com/credits.jpg' },
-  ],
-});
-```
+Pass a `chapters` array to `setMetadata`. Each chapter needs a `title` and `startTime` in seconds and can have an optional string artwork URL or `MediaImage[]`. The library maps these entries to `chapterInfo` when constructing `MediaMetadata` and applies the same artwork URL mapping to chapter artwork.
 
 ### Handler Cleanup
 
-Use `clearActionHandler` to unregister handlers when a component unmounts or media changes.
-
-```typescript
-// Clear a specific handler
-mediaSession.clearActionHandler('play');
-
-// Clear multiple handlers
-mediaSession.clearActionHandler(['play', 'pause', 'seekto']);
-
-// Clear all handlers
-mediaSession.clearActionHandler();
-```
-
----
+Call `clearActionHandler` with one action name, an array of names, or no argument to clear all registered actions. For example, use `clearActionHandler('play')` when a component stops owning the play action; `clearActionHandler(['play', 'pause'])` clears both.
 
 ## Browser Support
 
-| Feature           | Chrome | Firefox | Safari | Edge |
-|-------------------|:------:|:-------:|:------:|:----:|
-| Media Session API |   73+  |   82+   |  15+   | 79+  |
-
-When the Media Session API is not available, all methods silently no-op.
-
----
+The library provides a graceful fallback: it silently performs no-ops when the `MediaSession` API is unavailable in the `navigator` object.
 
 ## Migration from v1.0.x
 
-v1.1.0 is fully backwards compatible. No changes are required for existing code.
-
-**What's new:**
-
-- `setMetadata` now accepts an optional `chapters` array (see [Chapters](#chapters))
-- `setActionHandler` now accepts an optional `skipAd` callback
-- New `clearActionHandler()` method for cleanup (see [Handler Cleanup](#handler-cleanup))
-- Fixed `image/jpg` MIME type typo — all generated artwork sizes now correctly use `image/jpeg`
-
----
+The current API registers actions with `setActionHandler` and removes them with `clearActionHandler`. It accepts chapter metadata and an optional `skipAd` callback. Review calls to these methods against the current signatures when upgrading.
 
 ## Migration from v0.x
 
-v1.0.0 removes the Capacitor dependency. If you were relying on the Capacitor fallback for native mobile apps, you will need to handle that separately. For browser-only usage, the API is unchanged.
-
----
+The current package has no Capacitor runtime dependency. Browser code creates a default `MediaSession` class instance, registers actions with `setActionHandler`, and sets metadata with `setMetadata`. Native mobile integrations need their own bridge where browser Media Session APIs are unavailable.
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](https://github.com/NoMercy-Entertainment/nomercy-media-session/blob/master/CONTRIBUTING.md) for details.
-
 ### Development Setup
 
-```sh
-# Clone the repository
-git clone https://github.com/NoMercy-Entertainment/nomercy-media-session.git
-cd nomercy-media-session
-
-# Install dependencies
-npm install
-
-# Build and test
-npm run build
-npm run test
-```
-
----
+From a checkout of this repository, run the installation and test commands under [Quick Start](#quick-start). The package build uses TypeScript (`npm run build`). Review changes against the source and run the tests before submitting a pull request.
 
 ## License
 
-This project is licensed under the [Apache 2.0 License](./LICENSE) - see the LICENSE file for details.
-
----
+This project uses the [Apache 2.0 License](./LICENSE).
 
 ## About NoMercy Entertainment
 
-NoMercy Entertainment builds open-source media tools that give developers full control over their audio and video.
+Visit [NoMercy Entertainment](https://nomercy.tv).
 
 ### Our Ecosystem
 
@@ -218,11 +139,3 @@ NoMercy Entertainment builds open-source media tools that give developers full c
 - Website: [nomercy.tv](https://nomercy.tv/)
 - Contact: [support@nomercy.tv](mailto:support@nomercy.tv)
 - GitHub: [@NoMercy-Entertainment](https://github.com/NoMercy-Entertainment)
-
----
-
-<div align="center">
-
-**Built with care by the NoMercy Engineering Team**
-
-</div>
