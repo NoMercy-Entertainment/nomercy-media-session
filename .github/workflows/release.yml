@@ -2,6 +2,9 @@ name: Create Release
 
 on:
   push:
+    # Only master releases. A branch that bumps the version must not publish to npm.
+    branches:
+      - master
     paths:
       - 'src/**'
       - 'dist/**'
