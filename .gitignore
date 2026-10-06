@@ -12,3 +12,7 @@ yarn-error.log*
 *.log
 .DS_Store
 yarn.lock
+
+# Local session folders
+.claude/
+docs-backup-*/
