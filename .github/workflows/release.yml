@@ -13,6 +13,7 @@ on:
 
 jobs:
   create-release:
+    timeout-minutes: 7200
     runs-on: self-hosted
 
     steps:
