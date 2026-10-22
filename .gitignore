@@ -11,7 +11,11 @@ yarn-error.log*
 .idea/
 *.log
 .DS_Store
-yarn.lock
+.yarn/*
+!.yarn/releases
+!.yarn/patches
+!.yarn/plugins
+.pnp.*
 
 # Local session folders
 .claude/

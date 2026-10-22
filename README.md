@@ -31,12 +31,12 @@ Run `npm install @nomercy-entertainment/media-session` in your browser applicati
 To verify this repository locally, run these commands from the repository root:
 
 ```shell
-npm ci --ignore-scripts
+yarn install --immutable --mode=skip-build
 ```
 This installs the necessary dependencies without triggering lifecycle scripts.
 
 ```shell
-npm test -- --runInBand
+yarn test --runInBand
 ```
 This runs the test suite in a single process. A successful run is confirmed by `Tests: 31 passed, 31 total`.
 
@@ -117,7 +117,7 @@ The current package has no Capacitor runtime dependency. Browser code creates a 
 
 ### Development Setup
 
-From a checkout of this repository, run the installation and test commands under [Quick Start](#quick-start). The package build uses TypeScript (`npm run build`). Review changes against the source and run the tests before submitting a pull request.
+From a checkout of this repository, run the installation and test commands under [Quick Start](#quick-start). The package build uses TypeScript (`yarn build`). Review changes against the source and run the tests before submitting a pull request.
 
 ## License
 
